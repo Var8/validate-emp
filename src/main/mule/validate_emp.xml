@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="c6c1c90d-52dc-43dd-9181-9bbd5fed4d9d" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="631cc98b-cdfd-445b-8896-0708c23906f4" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="8978153531@aA"/>
+	</db:config>
+	<configuration doc:name="Configuration" doc:id="cf5cddfc-baf0-4da3-85dd-300449cdf2c5" defaultErrorHandler-ref="Global-errorhandlerError_Handler" />
+	<sub-flow name="sub-flow-getemp" doc:id="baa6cdd7-272e-4546-896d-7c68bd452c87" >
+		<try doc:name="Try" doc:id="b1e587ce-8012-4104-b3bc-aeb06d4bd48b" >
+			<db:select doc:name="Select" doc:id="be0a4369-2d46-4e4a-8372-4e96edd7d5fc" config-ref="Database_Config">
+			<db:sql><![CDATA[select emp_id, emp_name, emp_status from onboard.emp_master where emp_id=:empid]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	empid: attributes.queryParams.empid
+	
+}]]]></db:input-parameters>
+		</db:select>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="8ad1b773-de5e-4126-aef7-7e5aeffd8037" type="ANY">
+					<logger level="INFO" doc:name="Logger" doc:id="89e80dbc-a27d-4323-a4f8-e2e68a199666" message="Database Error Occured"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+	<flow name="validate_empFlow" doc:id="113621be-b9ab-45a4-922d-73104816ead1" >
+		<http:listener doc:name="Listener" doc:id="2207ef8a-f708-4211-a299-f5943abee36b" config-ref="HTTP_Listener_config" path="get-employee" allowedMethods="GET">
+			<http:error-response statusCode="#[vars.Statuscode]" reasonPhrase="#[vars.reasonPhrase]" >
+				<http:body ><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<validation:is-number doc:name="Is number" doc:id="b120f1f9-0cc4-4340-a1d3-e05f75863577" value="#[attributes.queryParams.empid]" numberType="INTEGER" message="Employee id should be number"/>
+		<flow-ref doc:name="Flow Reference" doc:id="275ae0a9-55ff-467a-9019-f567639c2ef8" name="sub-flow-getemp" />
+		<choice doc:name="Choice" doc:id="afb54b51-4acf-4bb6-ae26-9eaff202b065" >
+			<when expression="#[sizeOf(payload) &gt; 0]">
+				<ee:transform doc:name="Transform Message" doc:id="711bb94b-efd4-45ba-8001-4b27a64b046f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ 
+	"Employee_id": payload[0].'emp_id',
+	"Employee_name": payload[0].'emp_name',
+	"Employee_status": payload[0].'emp_status'
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="70fef0c1-238f-4e7d-b7dd-7232794b21c3" type="EMP:EMPLOYEE_NOT_FOUND"/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>
