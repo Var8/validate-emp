@@ -46,9 +46,9 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 output application/json
 ---
 { 
-	"Employee_id": payload[0].'emp_id',
-	"Employee_name": payload[0].'emp_name',
-	"Employee_status": payload[0].'emp_status'
+	"Emp_id": payload[0].'emp_id',
+	"Emp_name": payload[0].'emp_name',
+	"Emp_status": payload[0].'emp_status'
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
