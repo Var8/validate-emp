@@ -36,7 +36,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 				<http:body ><![CDATA[#[payload]]]></http:body>
 			</http:error-response>
 		</http:listener>
-		<validation:is-number doc:name="Is number" doc:id="b120f1f9-0cc4-4340-a1d3-e05f75863577" value="#[attributes.queryParams.empid]" numberType="INTEGER" message="Employee id should be number"/>
+		<validation:is-number doc:name="Is number" doc:id="b120f1f9-0cc4-4340-a1d3-e05f75863577" value="#[attributes.queryParams.empid]" numberType="INTEGER" message="Employee id should be integer"/>
 		<flow-ref doc:name="Flow Reference" doc:id="275ae0a9-55ff-467a-9019-f567639c2ef8" name="sub-flow-getemp" />
 		<choice doc:name="Choice" doc:id="afb54b51-4acf-4bb6-ae26-9eaff202b065" >
 			<when expression="#[sizeOf(payload) &gt; 0]">
